@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ChatRoom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+
+<!-- ── APP SHELL ────────────────────────────────────── -->
+<div class="app" id="app">
+
+  <!-- SERVER SIDEBAR -->
+  <div class="servers" id="server-list">
+    <div class="srv-icon active" title="ChatRoom">CR</div>
+    <div class="srv-divider"></div>
+    <div class="srv-icon add-srv" title="Add Server" onclick="toast('Feature coming soon!','info')">
+      <i class="ti ti-plus"></i>
+    </div>
+  </div>
+
+  <!-- CHANNELS SIDEBAR -->
+  <div class="channels">
+    <div class="server-name">
+      ChatRoom
+      <i class="ti ti-chevron-down" style="font-size:16px;opacity:.6"></i>
+    </div>
+    <!-- channelList is populated by renderChannelList(); dmList injected inside it -->
+    <div class="channel-list" id="channelList"></div>
+
+    <!-- USER PANEL -->
+    <div class="user-panel">
+      <!-- selfAvatar, selfDot, selfName, selfStatus used by renderSelf() & setStatus() -->
+      <div class="m-avatar" id="selfAvatar"
+           style="width:32px;height:32px;font-size:12px;background:#5865F2;cursor:pointer;position:relative"
+           onclick="openStatusMenu(event)">
+        ??
+        <div class="u-dot dot-online" id="selfDot"
+             style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;border:2px solid #232428"></div>
+      </div>
+      <div class="user-info" onclick="openStatusMenu(event)" style="cursor:pointer">
+        <div class="user-name" id="selfName">Loading…</div>
+        <div class="user-status" id="selfStatus">Online</div>
+      </div>
+      <div class="user-controls">
+        <!-- muteBtn toggled by toggleMute() -->
+        <div class="ctrl-btn" id="muteBtn" title="Mute/Unmute" onclick="toggleMute()">
+          <i class="ti ti-microphone"></i>
+        </div>
+        <!-- deafenBtn toggled by toggleDeafen() -->
+        <div class="ctrl-btn" id="deafenBtn" title="Deafen" onclick="toggleDeafen()">
+          <i class="ti ti-headphones"></i>
+        </div>
+        <div class="ctrl-btn" title="Logout" onclick="logout()">
+          <i class="ti ti-logout"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CHAT -->
+  <div class="chat-area">
+
+    <!-- CHAT HEADER -->
+    <div class="chat-header">
+      <!-- headerIcon / headerName / headerDesc set by selectRoom() / openDm() -->
+      <i class="ti ti-hash" id="headerIcon"></i>
+      <span class="ch-name" id="headerName">Select a channel</span>
+      <span class="ch-desc"  id="headerDesc"></span>
+      <div class="header-actions">
+        <!-- voiceJoinBtn shown only for voice channels -->
+        <button id="voiceJoinBtn" class="btn-action"
+                style="display:none;padding:6px 12px;font-size:13px"
+                onclick="joinVoice()">
+          <i class="ti ti-phone"></i> Join Voice
+        </button>
+        <i class="ti ti-users" title="Toggle members" onclick="toggleMembers()"></i>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="messages" id="messages">
+      <div class="welcome-msg">
+        <i class="ti ti-hash" style="font-size:48px;color:#5865F2;margin-bottom:8px"></i>
+        <h2>Welcome to ChatRoom!</h2>
+        <p>Select a channel or DM to start chatting.</p>
+      </div>
+    </div>
+
+    <!-- TYPING INDICATOR -->
+    <!-- showTyping() sets textContent directly on this element -->
+    <div class="typing-indicator" id="typingIndicator"></div>
+
+    <!-- CHAT INPUT (inputArea hidden for voice channels) -->
+    <div class="chat-input-area" id="inputArea" style="display:none">
+      <div class="chat-input-wrap">
+        <i class="ti ti-circle-plus input-icon" title="Attach"
+           onclick="toast('File upload coming soon!','info')"></i>
+        <!-- chatInput used by sendMessage() / initInputHandlers() -->
+        <textarea class="chat-input" id="chatInput" rows="1"
+                  placeholder="Message #channel" style="resize:none;overflow:hidden"></textarea>
+        <i class="ti ti-gif input-icon" title="GIF" onclick="toggleGifPicker()"></i>
+        <i class="ti ti-mood-happy input-icon" title="Emoji" onclick="toggleEmojiPicker()"></i>
+        <i class="ti ti-send input-icon send-btn" onclick="sendMessage()"></i>
+      </div>
+
+      <!-- GIF PICKER -->
+      <div class="gif-picker" id="gifPicker">
+        <div class="gif-search-wrap">
+          <!-- gifSearch oninput wired by toggleGifPicker() -->
+          <input id="gifSearch" placeholder="Search GIFs…" />
+        </div>
+        <div class="gif-grid" id="gifGrid"></div>
+      </div>
+
+      <!-- EMOJI PICKER -->
+      <div class="emoji-picker" id="emojiPicker">
+        <!-- emojiCats populated by initEmojiPicker() -->
+        <div class="emoji-categories" id="emojiCats"></div>
+        <!-- emojiSearch oninput wired by initEmojiPicker() -->
+        <input id="emojiSearch" placeholder="Search emoji…"
+               style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text-primary);font-size:13px;font-family:var(--font);outline:none;width:100%"/>
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+    </div>
+
+  </div><!-- /.chat-area -->
+
+  <!-- MEMBERS PANEL -->
+  <!-- membersPanel content set by renderMembers() -->
+  <div class="members-panel" id="membersPanel"></div>
+
+</div><!-- /.app -->
+
+<!-- VOICE PANEL (fixed bar, shown when in a voice channel) -->
+<!-- voicePanel classList toggled by joinVoice() / leaveVoice() -->
+<div class="voice-bar" id="voicePanel">
+  <div class="vc-info">
+    <i class="ti ti-volume" style="color:#23a55a"></i>
+    <span id="voiceRoomName">Voice</span>
+    <span class="vc-users-count">Connected</span>
+  </div>
+  <!-- voiceUsersList populated by renderVoiceMembers() -->
+  <div class="vc-users-count" id="voiceUsersList" style="max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></div>
+  <div class="vc-controls">
+    <button class="vc-btn" title="Mute" onclick="toggleMute()">
+      <i class="ti ti-microphone"></i>
+    </button>
+    <button class="vc-btn vc-leave" title="Leave" onclick="leaveVoice()">
+      <i class="ti ti-phone-off"></i>
+    </button>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<!-- ctxMenu populated dynamically by openUserCtx() -->
+<div class="context-menu" id="ctxMenu"></div>
+
+<!-- ── MODALS ────────────────────────────────────────── -->
+
+<!-- BAN MODAL  (banModal / banModalTitle / banReason / banDuration) -->
+<div class="modal-overlay" id="banModal">
+  <div class="modal">
+    <h3 id="banModalTitle"><i class="ti ti-ban"></i> Ban User</h3>
+    <input id="banReason" placeholder="Reason (optional)" />
+    <div class="ban-duration">
+      <label>Duration:</label>
+      <select id="banDuration">
+        <option value="1">1 Hour</option>
+        <option value="24">24 Hours</option>
+        <option value="168">1 Week</option>
+        <option value="">Permanent</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('banModal')">Cancel</button>
+      <button class="btn-ban"    onclick="confirmBan()">Ban User</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS / STATUS MODAL  (settingsModal) -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3><i class="ti ti-settings"></i> Settings</h3>
+    <label style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px">Status</label>
+    <select onchange="setStatus(this.value)">
+      <option value="online">🟢 Online</option>
+      <option value="idle">🟡 Idle</option>
+      <option value="dnd">🔴 Do Not Disturb</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('settingsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL  (adminModal / adminContent / tab-btn) -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal modal-wide" style="width:640px;max-width:95vw">
+    <h3><i class="ti ti-shield"></i> Admin Panel</h3>
+    <div class="admin-tabs">
+      <button class="admin-tab tab-btn active" onclick="adminTab('users',this)"><i class="ti ti-users" style="font-size:13px"></i> Users</button>
+      <button class="admin-tab tab-btn"        onclick="adminTab('bans', this)"><i class="ti ti-ban" style="font-size:13px"></i> Bans</button>
+      <button class="admin-tab tab-btn"        onclick="adminTab('rooms',this)"><i class="ti ti-hash" style="font-size:13px"></i> Rooms</button>
+    </div>
+    <div id="adminContent" style="min-height:120px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('adminModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE ROOM MODAL  (createRoomModal / newRoomName / newRoomDesc / newRoomType) -->
+<div class="modal-overlay" id="createRoomModal">
+  <div class="modal">
+    <h3><i class="ti ti-plus"></i> Create Channel</h3>
+    <input  id="newRoomName" placeholder="channel-name" />
+    <input  id="newRoomDesc" placeholder="Description (optional)" />
+    <select id="newRoomType">
+      <option value="text">💬 Text</option>
+      <option value="announcement">📢 Announcement</option>
+      <option value="voice">🔊 Voice</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('createRoomModal')">Cancel</button>
+      <button class="btn-action" onclick="createRoom()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ────────────────────────────────────────── -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="/js/voice.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

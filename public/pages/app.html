@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChatRoom</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+:root{
+  --bg-1:#111214;--bg-2:#1e1f22;--bg-3:#2b2d31;--bg-4:#313338;--bg-5:#383a40;
+  --accent:#5865F2;--accent-h:#4752c4;--green:#23a55a;--yellow:#f0b132;--red:#ed4245;
+  --text-1:#f2f3f5;--text-2:#dcddde;--text-3:#b5bac1;--text-4:#949ba4;--text-5:#72767d;
+  --border:#2b2d31;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Space Grotesk',sans-serif;}
+body{background:var(--bg-1);color:var(--text-2);height:100vh;overflow:hidden;display:flex;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#3f4147;border-radius:3px;}
+
+/* ── SERVERS ── */
+.servers{width:72px;background:var(--bg-1);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px;flex-shrink:0;border-right:1px solid #18191c;}
+.srv-btn{width:48px;height:48px;border-radius:50%;background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-radius .2s,background .2s;position:relative;font-size:14px;font-weight:700;color:var(--text-1);border:none;overflow:hidden;}
+.srv-btn:hover,.srv-btn.active{border-radius:16px;background:var(--accent);}
+.srv-btn .notif{position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;background:var(--red);border-radius:50%;border:2px solid var(--bg-1);font-size:8px;display:flex;align-items:center;justify-content:center;}
+.srv-divider{width:32px;height:2px;background:var(--bg-3);border-radius:2px;flex-shrink:0;}
+.srv-add{background:var(--bg-3);color:var(--green);font-size:22px;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;background:var(--bg-3);display:flex;flex-direction:column;flex-shrink:0;}
+.server-header{height:48px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:15px;color:var(--text-1);border-bottom:1px solid var(--bg-1);cursor:pointer;flex-shrink:0;}
+.server-header:hover{background:var(--bg-5);}
+.ch-list{flex:1;overflow-y:auto;padding:8px 0;}
+.ch-category{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 4px 16px;font-size:11px;font-weight:600;color:var(--text-4);text-transform:uppercase;letter-spacing:.6px;margin-top:10px;cursor:pointer;}
+.ch-category:hover{color:var(--text-3);}
+.ch-item{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:6px;margin:1px 8px;cursor:pointer;color:var(--text-4);font-size:14px;position:relative;}
+.ch-item:hover{background:var(--bg-5);color:var(--text-2);}
+.ch-item.active{background:#404249;color:var(--text-1);}
+.ch-item i{font-size:18px;flex-shrink:0;}
+.ch-item .ch-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ch-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;flex-shrink:0;}
+.ch-item .ch-actions{display:none;gap:2px;margin-left:auto;}
+.ch-item:hover .ch-actions{display:flex;}
+.ch-action-btn{background:none;border:none;color:var(--text-4);cursor:pointer;padding:2px;border-radius:4px;font-size:16px;}
+.ch-action-btn:hover{color:var(--text-1);background:var(--bg-1);}
+.vc-users{padding-left:8px;}
+.vc-user-item{display:flex;align-items:center;gap:6px;padding:3px 8px 3px 16px;border-radius:4px;cursor:pointer;color:var(--text-4);font-size:13px;}
+.vc-user-item:hover{background:var(--bg-5);}
+.dm-list{flex:1;overflow-y:auto;}
+.user-panel{height:52px;background:#232428;display:flex;align-items:center;padding:0 8px;gap:8px;flex-shrink:0;}
+.u-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;position:relative;cursor:pointer;}
+.u-dot{position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;border:2px solid #232428;}
+.dot-online{background:var(--green);}
+.dot-idle{background:var(--yellow);}
+.dot-dnd{background:var(--red);}
+.dot-offline{background:#80848e;}
+.u-info{flex:1;min-width:0;}
+.u-name{font-size:13px;font-weight:600;color:var(--text-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.u-status{font-size:11px;color:var(--text-4);}
+.ctrl-btn{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-4);background:none;border:none;font-size:18px;}
+.ctrl-btn:hover{background:var(--bg-5);color:var(--text-2);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;background:var(--bg-4);overflow:hidden;}
+.chat-header{height:48px;border-bottom:1px solid var(--bg-1);display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0;}
+.chat-header i{font-size:20px;color:var(--text-4);}
+.chat-header .ch-name{font-weight:700;color:var(--text-1);font-size:16px;}
+.chat-header .ch-desc{color:var(--text-4);font-size:13px;margin-left:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.header-right{margin-left:auto;display:flex;gap:6px;}
+.header-btn{background:none;border:none;color:var(--text-4);cursor:pointer;font-size:20px;padding:4px;border-radius:4px;}
+.header-btn:hover{color:var(--text-1);}
+
+/* ── MESSAGES ── */
+.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:2px;}
+.msg-group{display:flex;gap:12px;margin-top:14px;}
+.msg-group:first-child{margin-top:0;}
+.msg-cont-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;margin-top:2px;}
+.msg-body{flex:1;}
+.msg-header{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;}
+.msg-author{font-weight:600;font-size:14px;cursor:pointer;}
+.msg-author:hover{text-decoration:underline;}
+.role-admin{color:var(--red)!important;}
+.role-moderator{color:var(--yellow)!important;}
+.role-badge{font-size:10px;padding:1px 5px;border-radius:4px;font-weight:600;vertical-align:middle;}
+.rb-admin{background:rgba(237,66,69,.2);color:var(--red);}
+.rb-moderator{background:rgba(240,177,50,.2);color:var(--yellow);}
+.msg-time{font-size:11px;color:var(--text-5);}
+.msg-text{color:var(--text-2);font-size:14px;line-height:1.5;word-break:break-word;}
+.msg-gif img{max-width:300px;border-radius:8px;display:block;margin-top:6px;cursor:pointer;}
+.msg-gif img:hover{opacity:.9;}
+.msg-reactions{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.reaction-btn{background:var(--bg-3);border:1.5px solid var(--bg-1);border-radius:12px;padding:2px 8px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;color:var(--text-4);font-family:inherit;}
+.reaction-btn:hover,.reaction-btn.mine{border-color:var(--accent);background:rgba(88,101,242,.15);color:var(--text-2);}
+.reaction-btn span{font-size:12px;}
+.sys-msg{display:flex;align-items:center;gap:8px;color:var(--text-5);font-size:13px;padding:2px 4px;margin:4px 0;}
+.sys-msg i{font-size:16px;}
+.sys-ban{color:rgba(237,66,69,.8);}
+.sys-mod{color:rgba(87,242,135,.8);}
+.sys-clear{color:var(--yellow);}
+.typing-indicator{height:20px;padding:0 16px;font-size:12px;color:var(--text-4);}
+.msg-hover-actions{display:none;position:absolute;right:8px;top:-14px;background:var(--bg-3);border:1px solid var(--bg-1);border-radius:8px;padding:4px;gap:2px;z-index:10;}
+.msg-group{position:relative;}
+.msg-group:hover .msg-hover-actions{display:flex;}
+.msg-action-btn{background:none;border:none;color:var(--text-4);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:16px;}
+.msg-action-btn:hover{background:var(--bg-5);color:var(--text-1);}
+
+/* ── INPUT ── */
+.chat-input-area{padding:0 16px 16px;flex-shrink:0;}
+.chat-input-wrap{background:var(--bg-5);border-radius:8px;display:flex;align-items:center;padding:0 12px;gap:8px;}
+.input-icon{color:var(--text-4);cursor:pointer;font-size:22px;padding:10px 0;background:none;border:none;flex-shrink:0;}
+.input-icon:hover{color:var(--text-2);}
+.chat-input{flex:1;background:none;border:none;outline:none;color:var(--text-1);font-size:14px;padding:11px 0;font-family:inherit;resize:none;max-height:200px;}
+.chat-input::placeholder{color:var(--text-5);}
+
+/* ── MEMBERS ── */
+.members-panel{width:240px;background:var(--bg-3);padding:16px 8px;overflow-y:auto;flex-shrink:0;border-left:1px solid var(--bg-1);}
+.members-panel.hidden{display:none;}
+.members-cat{font-size:11px;font-weight:600;color:var(--text-4);text-transform:uppercase;letter-spacing:.6px;padding:4px 8px;margin:12px 0 6px;}
+.member-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:4px;cursor:pointer;}
+.member-item:hover{background:var(--bg-5);}
+.m-name{font-size:14px;color:var(--text-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.m-role{font-size:11px;color:var(--text-5);}
+.member-item:hover .m-name{color:var(--text-1);}
+.member-item.offline{opacity:.5;}
+
+/* ── GIF PICKER ── */
+.gif-picker{position:absolute;bottom:70px;left:0;right:0;margin:0 16px;background:var(--bg-2);border:1px solid var(--bg-5);border-radius:12px;padding:12px;z-index:100;max-height:360px;display:none;flex-direction:column;gap:8px;}
+.gif-picker.open{display:flex;}
+.gif-search{background:var(--bg-3);border:1.5px solid var(--bg-5);border-radius:8px;padding:8px 12px;color:var(--text-1);font-size:14px;font-family:inherit;outline:none;width:100%;}
+.gif-search:focus{border-color:var(--accent);}
+.gif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow-y:auto;max-height:280px;}
+.gif-item{border-radius:6px;overflow:hidden;cursor:pointer;aspect-ratio:1;background:var(--bg-3);}
+.gif-item img{width:100%;height:100%;object-fit:cover;}
+.gif-item:hover{outline:2px solid var(--accent);}
+
+/* ── EMOJI PICKER ── */
+.emoji-picker{position:absolute;bottom:70px;right:16px;background:var(--bg-2);border:1px solid var(--bg-5);border-radius:12px;padding:12px;z-index:100;width:320px;display:none;flex-direction:column;gap:8px;}
+.emoji-picker.open{display:flex;}
+.emoji-search{background:var(--bg-3);border:1.5px solid var(--bg-5);border-radius:8px;padding:8px 12px;color:var(--text-1);font-size:14px;font-family:inherit;outline:none;width:100%;}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:200px;overflow-y:auto;}
+.emoji-btn{background:none;border:none;font-size:22px;cursor:pointer;border-radius:6px;padding:4px;text-align:center;}
+.emoji-btn:hover{background:var(--bg-5);}
+.emoji-cats{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap;}
+.emoji-cat-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:4px;border-radius:6px;}
+.emoji-cat-btn:hover,.emoji-cat-btn.active{background:var(--bg-5);}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1000;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg-2);border-radius:12px;padding:24px;width:100%;max-width:480px;border:1px solid var(--bg-5);}
+.modal h3{font-size:18px;font-weight:700;color:var(--text-1);margin-bottom:16px;}
+.modal-field{margin-bottom:14px;}
+.modal-field label{display:block;font-size:12px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%;background:var(--bg-3);border:1.5px solid var(--bg-5);border-radius:8px;padding:10px 12px;color:var(--text-1);font-size:14px;font-family:inherit;outline:none;}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.btn{padding:10px 20px;border-radius:8px;border:none;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-h);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#c0392b;}
+.btn-ghost{background:transparent;color:var(--text-3);border:1.5px solid var(--bg-5);}
+.btn-ghost:hover{background:var(--bg-3);}
+
+/* ── USER CONTEXT MENU ── */
+.ctx-menu{position:fixed;background:var(--bg-1);border:1px solid var(--bg-5);border-radius:8px;padding:6px;z-index:500;min-width:160px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.ctx-menu.open{display:block;}
+.ctx-item{padding:8px 12px;border-radius:4px;cursor:pointer;font-size:14px;color:var(--text-2);}
+.ctx-item:hover{background:var(--accent);color:#fff;}
+.ctx-item.danger:hover{background:var(--red);}
+.ctx-item.danger{color:var(--red);}
+.ctx-sep{height:1px;background:var(--bg-5);margin:4px 0;}
+
+/* ── VOICE PANEL ── */
+.voice-panel{background:rgba(88,101,242,.1);border-top:1px solid rgba(88,101,242,.3);padding:8px 12px;display:none;flex-shrink:0;}
+.voice-panel.active{display:block;}
+.voice-info{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.voice-title{font-size:13px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:6px;}
+.voice-controls{display:flex;gap:4px;}
+.voice-btn{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg-3);color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.voice-btn:hover{background:var(--bg-5);color:var(--text-1);}
+.voice-btn.active{background:var(--red);color:#fff;}
+.voice-users-list{display:flex;gap:8px;flex-wrap:wrap;}
+.voice-user-chip{display:flex;align-items:center;gap:6px;background:var(--bg-3);border-radius:20px;padding:3px 10px 3px 6px;font-size:13px;}
+.voice-user-chip .va{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;}
+
+/* ── TABS (DM view) ── */
+.tab-bar{display:flex;gap:2px;padding:8px;border-bottom:1px solid var(--bg-1);}
+.tab-btn{flex:1;padding:8px;border-radius:6px;border:none;background:none;color:var(--text-4);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;}
+.tab-btn.active{background:var(--bg-5);color:var(--text-1);}
+
+/* ── MISC ── */
+.hidden{display:none!important;}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--bg-3);border:1px solid var(--bg-5);border-radius:8px;padding:12px 16px;color:var(--text-1);font-size:14px;z-index:9999;animation:slideIn .3s ease;max-width:300px;}
+.toast.error{border-color:rgba(237,66,69,.4);background:rgba(237,66,69,.15);color:var(--red);}
+.toast.success{border-color:rgba(87,242,135,.3);background:rgba(87,242,135,.1);color:#57f287;}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.chat-area-wrapper{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+</style>
+</head>
+<body>
+
+<!-- SERVERS -->
+<div class="servers" id="serverList">
+  <div class="srv-btn active" title="Main Server">CR</div>
+  <div class="srv-divider"></div>
+  <div class="srv-btn srv-add" title="Add Server" onclick="openModal('createRoomModal')"><i class="ti ti-plus"></i></div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="server-header" id="serverName">
+    ChatRoom
+    <i class="ti ti-chevron-down" style="font-size:16px;color:var(--text-4)"></i>
+  </div>
+  <div class="ch-list" id="channelList"></div>
+  <div class="voice-panel" id="voicePanel">
+    <div class="voice-info">
+      <div class="voice-title"><i class="ti ti-wifi"></i><span id="voiceRoomName">Voice</span></div>
+      <div class="voice-controls">
+        <button class="voice-btn" id="muteBtn" onclick="toggleMute()" title="Mute"><i class="ti ti-microphone"></i></button>
+        <button class="voice-btn" id="deafenBtn" onclick="toggleDeafen()" title="Deafen"><i class="ti ti-headphones"></i></button>
+        <button class="voice-btn active" onclick="leaveVoice()" title="Leave"><i class="ti ti-phone-off"></i></button>
+      </div>
+    </div>
+    <div class="voice-users-list" id="voiceUsersList"></div>
+  </div>
+  <div class="user-panel">
+    <div class="u-avatar" id="selfAvatar" onclick="openStatusMenu(event)">
+      <div class="u-dot dot-online" id="selfDot"></div>
+    </div>
+    <div class="u-info">
+      <div class="u-name" id="selfName">Loading...</div>
+      <div class="u-status" id="selfStatus">Online</div>
+    </div>
+    <button class="ctrl-btn" id="micBtn" onclick="toggleMic()" title="Mic"><i class="ti ti-microphone"></i></button>
+    <button class="ctrl-btn" onclick="openModal('settingsModal')" title="Settings"><i class="ti ti-settings"></i></button>
+  </div>
+</div>
+
+<!-- MAIN CHAT AREA -->
+<div class="main" id="mainArea">
+  <div class="chat-header" id="chatHeader">
+    <i class="ti ti-hash" id="headerIcon"></i>
+    <span class="ch-name" id="headerName">Select a channel</span>
+    <span class="ch-desc" id="headerDesc"></span>
+    <div class="header-right">
+      <button class="header-btn" id="voiceJoinBtn" title="Join Voice" onclick="joinVoice()" style="display:none"><i class="ti ti-phone"></i></button>
+      <button class="header-btn" onclick="toggleMembers()" title="Members"><i class="ti ti-users"></i></button>
+      <button class="header-btn" title="Search"><i class="ti ti-search"></i></button>
+    </div>
+  </div>
+
+  <div class="chat-area-wrapper">
+    <div class="messages" id="messages"></div>
+    <div class="typing-indicator" id="typingIndicator"></div>
+
+    <!-- GIF Picker -->
+    <div class="gif-picker" id="gifPicker">
+      <input class="gif-search" placeholder="Search GIFs..." id="gifSearch"/>
+      <div class="gif-grid" id="gifGrid"></div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div class="emoji-picker" id="emojiPicker">
+      <input class="emoji-search" placeholder="Search emoji..." id="emojiSearch"/>
+      <div class="emoji-cats" id="emojiCats"></div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+  </div>
+
+  <div class="chat-input-area" id="inputArea">
+    <div class="chat-input-wrap">
+      <button class="input-icon" onclick="toggleGifPicker()" title="GIF"><i class="ti ti-gif"></i></button>
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Message #general"></textarea>
+      <button class="input-icon" onclick="toggleEmojiPicker()" title="Emoji"><i class="ti ti-mood-happy"></i></button>
+      <button class="input-icon" onclick="sendMessage()" title="Send" style="color:var(--accent)"><i class="ti ti-send"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBERS PANEL -->
+<div class="members-panel" id="membersPanel"></div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu"></div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="createRoomModal">
+  <div class="modal">
+    <h3>Create Channel</h3>
+    <div class="modal-field">
+      <label>Channel Name</label>
+      <input type="text" id="newRoomName" placeholder="my-channel"/>
+    </div>
+    <div class="modal-field">
+      <label>Description</label>
+      <input type="text" id="newRoomDesc" placeholder="What's this channel for?"/>
+    </div>
+    <div class="modal-field">
+      <label>Type</label>
+      <select id="newRoomType">
+        <option value="text">Text Channel</option>
+        <option value="voice">Voice Channel</option>
+        <option value="announcement">Announcement</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('createRoomModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createRoom()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="banModal">
+  <div class="modal">
+    <h3 id="banModalTitle">Ban User</h3>
+    <div class="modal-field">
+      <label>Reason</label>
+      <input type="text" id="banReason" placeholder="Reason for ban"/>
+    </div>
+    <div class="modal-field">
+      <label>Duration (hours, leave empty = permanent)</label>
+      <input type="number" id="banDuration" placeholder="e.g. 24 for 1 day"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('banModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmBan()">Ban</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <div class="modal-field">
+      <label>Status</label>
+      <select id="statusSelect" onchange="setStatus(this.value)">
+        <option value="online">🟢 Online</option>
+        <option value="idle">🟡 Idle</option>
+        <option value="dnd">🔴 Do Not Disturb</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Close</button>
+      <button class="btn btn-danger" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="adminModal">
+  <div class="modal">
+    <h3>Admin Panel</h3>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="adminTab('users',this)">Users</button>
+      <button class="tab-btn" onclick="adminTab('bans',this)">Bans</button>
+    </div>
+    <div id="adminContent" style="margin-top:12px;max-height:300px;overflow-y:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('adminModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="/js/voice.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
