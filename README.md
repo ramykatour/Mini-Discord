@@ -24,7 +24,7 @@ Full-featured real-time chat application with rooms, DMs, voice chat, GIFs, emoj
 ### 1. Clone & Install
 
 ```bash
-git clone (https://github.com/ramykatour/Mini-Discord)
+git clone https://github.com/ramykatour/Mini-Discord
 cd chatroom
 npm install
 ```
